@@ -22,7 +22,22 @@ type channels struct{
 
 # 11.Jul
 ## todo
-* 用户名密码发送到server端进行验证
-* 向服务器发送到信息不再简单使用string，要求TLV
-* 实现查询聊天室
-* 在某一聊天室中所有成员离开后将其资源释放
+1. 用户名密码发送到server端进行验证
+2. 向服务器发送到信息不再简单使用string，要求TLV
+3. 实现查询聊天室
+4. 在某一聊天室中所有成员离开后将其资源释放
+
+# 13.Jul
+1. **√** 用户名密码发送到server端进行验证——在server端没有连接数据库，写死  
+```go
+func checkIDPSWD(id, pswd string) (ok bool) {
+	if id == "dxj" && pswd == "123" || 
+		id == "abc" && pswd == "123" {
+		return true
+	} else {
+		return false
+	}
+}
+```
+3. **√** 实现查询聊天室
+4. **√** 在某一聊天室中所有成员离开后将其资源释放——关闭channels，相应map中把room删除

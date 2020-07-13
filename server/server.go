@@ -68,15 +68,21 @@ func broadcaster(room string) {
 		case cli := <-roomChannels[room].leaving:
 			delete(clients, cli)
 			close(cli)
+			
+			// 最后一个人退出，关闭聊天室
+			if len(clients) == 0{
+				close(roomChannels[room].messages)
+				close(roomChannels[room].leaving)
+				close(roomChannels[room].entering)
+				delete(roomChannels, room)
+				return
+			}
 		}
 	}
 }
 
 func handleConn(conn net.Conn){
-	id, ok := checkLogin(conn)
-	if ok {
-		conn.Write([]byte("\\ok"))
-	}
+	id := checkLogin(conn)
 	fmt.Println(id, "登录成功")
 
 	var room string
@@ -93,9 +99,12 @@ func handleConn(conn net.Conn){
 		t, _ := parse(str)
 		if t == CMD_QUERY {
 			conn.Write([]byte(getRooms()))
+		} else if t == CMD_QUERY{
+			rooms := getRooms()
+			conn.Write([]byte(rooms))
 		} else if t == CMD_JOIN{
 			room = strings.Fields(str)[1]   // 获取房间名
-			fmt.Println(id + "有人进入房间了")
+			fmt.Println(id + "进入聊天室：" + room)
 			// 每新创建一个聊天室，就在roomChannels中增加相应的，并初始化
 			if _, exist := roomChannels[room]; exist == false{  // 没有该聊天室，创建新的
 				var newRoom channels
@@ -117,6 +126,7 @@ func handleConn(conn net.Conn){
 
 	go clientWriter(conn, ch)
 
+	// 从 客户端 接收消息 向同一聊天室内的人广播
 	buf := make([]byte, 1024)
 	for {
 		n, err := conn.Read(buf)
@@ -125,7 +135,8 @@ func handleConn(conn net.Conn){
 		}
 		roomChannels[room].messages <- string(buf[:n])
 	}
-
+	// 客户端终止进程，for循环结束
+	// 通过leaving channel 通知broadcaster此人已离开
 	roomChannels[room].leaving <- ch   // 离开房间
 
 
@@ -139,7 +150,7 @@ func clientWriter(conn net.Conn, ch <-chan string) {
 }
 
 
-func checkLogin(conn net.Conn) (id string, ok bool){
+func checkLogin(conn net.Conn) (id string){
 	buf := make([]byte, 1024)
 	for {
 		n, _ := conn.Read(buf)
@@ -149,25 +160,36 @@ func checkLogin(conn net.Conn) (id string, ok bool){
 			context := strings.Fields(str)
 			id := context[1]
 			pswd := context[2]
-			if checkIDPSWD(id, pswd){
-				ok = true
-				return id, ok
+			if checkIDPSWD(id, pswd){  // 登录不成功
+				conn.Write([]byte("\\ok"))
+				return id
+			} else {
+				conn.Write([]byte("\\wrong"))
+				continue
 			}
 		} else {
 			continue
 		}
 	}
-	ok = false
-	return id, ok
 }
 
 func checkIDPSWD(id, pswd string) (ok bool) {
-	return true
+	if id == "dxj" && pswd == "123" || 
+		id == "abc" && pswd == "123" {
+		return true
+	} else {
+		return false
+	}
 }
 
 func getRooms() (rooms string){
-	rooms = "abc 123"
-	return rooms
+	if len(roomChannels) == 0 {
+		return "未搜索到聊天室，创建一个吧\n"
+	}
+	for room, _ := range roomChannels{
+		rooms += room + " "
+	}
+	return rooms+"\n"
 }
 
 func parse(str string) (t CommandType, bs []byte){
