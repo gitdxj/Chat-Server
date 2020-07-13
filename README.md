@@ -28,7 +28,7 @@ type channels struct{
 4. 在某一聊天室中所有成员离开后将其资源释放
 
 # 13.Jul
-1. **√** 用户名密码发送到server端进行验证——在server端没有连接数据库，写死  
+1. **√** 用户名密码发送到server端进行验证——在server端没有连接数据库，写死。账号有两个：dxj 123和 abc 123
 ```go
 func checkIDPSWD(id, pswd string) (ok bool) {
 	if id == "dxj" && pswd == "123" || 
@@ -41,3 +41,7 @@ func checkIDPSWD(id, pswd string) (ok bool) {
 ```
 3. **√** 实现查询聊天室
 4. **√** 在某一聊天室中所有成员离开后将其资源释放——关闭channels，相应map中把room删除
+
+## todo 
+1. 小 bug：发送消息后，发送者的消息他自己会收一遍，要不要改一下这里？
+2. TLV搞一下
