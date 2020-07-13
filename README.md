@@ -45,3 +45,7 @@ func checkIDPSWD(id, pswd string) (ok bool) {
 ## todo 
 1. 小 bug：发送消息后，发送者的消息他自己会收一遍，要不要改一下这里？
 2. TLV搞一下
+
+# 13.Jul review 修改意见
+* 模块化——client, room, clientManager 和 roomManager 让代码结构清晰
+* TLV机制—— 当我们使用net.Conn.Read读取字节流时，比如登录信息：\\login id pswd 有可能pswd还没有传输到，所以需要指定L(length)信息确保我们读取了一整条应用层的消息
