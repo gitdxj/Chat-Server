@@ -49,3 +49,17 @@ func checkIDPSWD(id, pswd string) (ok bool) {
 # 13.Jul review 修改意见
 * 模块化——client, room, clientManager 和 roomManager 让代码结构清晰
 * TLV机制—— 当我们使用net.Conn.Read读取字节流时，比如登录信息：\\login id pswd 有可能pswd还没有传输到，所以需要指定L(length)信息确保我们读取了一整条应用层的消息
+
+# TLV 设计
+* **T 4 Byte 类型**
+* **L 4 Byte 长度**  protoBuf  --google varint
+* **V L Byte 值**
+## TLV解析算法
+1. 读取 Tag（或Type）并使用 ntohl 将其转成主机字节序，指针偏移4；
+2. 读取 Length ntohl** 将其转成主机字节序，指针偏移4；
+3. 根据得到的长度读取 Value，若为 int、char、short、long 类型，将其转为主机字节序，指针偏移；若值为字符串，读取后指针偏移 Length；
+4. 重复上述三步，继续读取后面的 TLV 单元。
+```go
+const TAG_SPECIFIER byte = 
+```
+
