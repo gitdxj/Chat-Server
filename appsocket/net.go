@@ -25,33 +25,38 @@ func NewAppSocket(conn net.Conn) *AppSocket{  // 这里要在函数内声明变�
 	return &as
 }
 
+func (as *AppSocket) Close() {
+	as.conn.Close()
+}
+
 // ReadAppFrame 从conn中读取一个TLV结构
 func (as *AppSocket) ReadAppFrame() (ft FrameType, val []byte, err error){
 
 	// 从conn中读取4个字节作为TYPE
-	var typeBytes []byte
-	err = as.readLenN(typeBytes, TYPE_SIZE)
+	typeBytes, err := as.readLenN(TYPE_SIZE)
+	//fmt.Println("typeBytes len =", len(typeBytes))
 	if err != nil {
 		return ft, val, err
 	}
 	ft = FrameType(bytesToInt(typeBytes))
 
 	// 从conn中读取4个字节作为LENGTH
-	var lenBytes []byte
-	err = as.readLenN(lenBytes, LENGTH_SIZE)
+	lenBytes, err := as.readLenN(LENGTH_SIZE)
+	//fmt.Println("lenBytes len =", len(lenBytes))
 	if err != nil {
 		return ft, val, err
 	}
 	length := bytesToInt(lenBytes)
+	//log.Println("MSG LENGTH =", length)
 
 	// 读取LENGTH个字节作为VAL
-	var valBytes []byte
-	err = as.readLenN(val, length)
+	val, err = as.readLenN(length)
+	//fmt.Println("valBytes = ", len(val))
 	if err != nil {
 		return ft, val, err
 	}
 
-	return ft, valBytes, err
+	return ft, val, err
 }
 
 func (as *AppSocket) WriteAppFrame(content []byte) (n int, err error){
@@ -69,28 +74,57 @@ func mvBytes2Front(buf []byte, from, n int) bool {
 	return true
 }
 
+// 这一版不应该使用append来
+//// readLenN 从conn中读取len个byte
+//func (as *AppSocket)readLenN(val []byte, len uint32) error{
+//	if len == 0{
+//		return nil
+//	}
+//	left := uint32(as.nBytes - as.flag)     // buf 中还有left个byte未读取
+//	if len < left {                         // 剩下未读取byte数量大于所需数量，无需再从conn中收取新的
+//		val = append(val, as.buf[as.flag:as.flag+len]...)
+//		as.flag += len                      // 读取了len个byte后更新flag
+//		return nil
+//	} else {                                // buf中的byte数量不够，需要从conn中读取
+//		val = append(val, as.buf[as.flag:as.nBytes]...)
+//		readBytes := as.nBytes - as.flag    // 这次读取了 readBytes 个 byte
+//		needBytes := len - readBytes        // 还需要读取 needBytes 个 byte
+//		n, err := as.conn.Read(as.buf)      // 从conn中收取
+//		if err != nil {
+//			return err
+//		}
+//		// 读取后重设 nrw 中的 flag 和 nBytes 参数
+//		as.nBytes = uint32(n)
+//		as.flag = 0
+//		return as.readLenN(val, needBytes)         // 再次读取，直到完全读完
+//	}
+//}
+
 // readLenN 从conn中读取len个byte
-func (as *AppSocket)readLenN(val []byte, len uint32) error{
+func (as *AppSocket)readLenN(len uint32)(val []byte, err error){
 	if len == 0{
-		return nil
+		return val, nil
 	}
 	left := uint32(as.nBytes - as.flag)     // buf 中还有left个byte未读取
-	if len < left {                         // 剩下未读取byte数量大于所需数量，无需再从conn中收取新的
-		val = append(val, as.buf[as.flag:as.flag+len]...)
-		as.flag += len                      // 读取了len个byte后更新flag
-		return nil
-	} else {                                // buf中的byte数量不够，需要从conn中读取
-		val = append(val, as.buf[as.flag:as.nBytes]...)
-		readBytes := as.nBytes - as.flag    // 这次读取了 readBytes 个 byte
-		needBytes := len - readBytes        // 还需要读取 needBytes 个 byte
-		n, err := as.conn.Read(as.buf)        // 从conn中收取
-		if err != nil {
-			return err
+	for len > 0 { // 当还未读满时
+		//fmt.Println("readLenN 嘟嘟嘟嘟")
+		if len <= left { // 剩下未读取byte数量大于所需数量，无需再从conn中收取新的
+			val = append(val, as.buf[as.flag:as.flag+len]...)
+			as.flag += len // 读取了len个byte后更新flag
+			return val, nil
+		} else { // buf中的byte数量不够，需要从conn中读取新的数据
+			val = append(val, as.buf[as.flag:as.nBytes]...)  // 先把buf里剩下的全读完
+			readBytes := as.nBytes - as.flag // 这次读取了 readBytes 个 byte
+			len = len - readBytes             // 还需要读取 needBytes 个 byte
+			n, err := as.conn.Read(as.buf)   // 从conn中收取
+			if err != nil {
+				return val, err
+			}
+			// 读取后重设 flag 和 nBytes 参数
+			as.nBytes = uint32(n)
+			as.flag = 0
+			left = as.nBytes - as.flag
 		}
-		// 读取后重设 nrw 中的 flag 和 nBytes 参数
-		as.nBytes = uint32(n)
-		as.flag = 0
-		return as.readLenN(val, needBytes)         // 再次读取，直到完全读完
 	}
+	return val, err
 }
-

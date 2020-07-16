@@ -1,15 +1,14 @@
 package main
 
 import (
-	"chat/client"
-	"chat/room"
+	"chat_v3/client"
+	"fmt"
 	"log"
 	"net"
 )
 
 func main(){
 
-	rm := room.NewRoomManager()
 	cm := client.NewClientManager()
 
 	listen, err := net.Listen("tcp", "localhost: 8000")
@@ -20,10 +19,11 @@ func main(){
 
 	for{
 		conn, err:= listen.Accept()
+		fmt.Println("New Connection From ", conn.RemoteAddr().String())
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		go cm.RunNewConnection(conn, rm)
+		go cm.RunNewConnection(conn)
 	}
 }

@@ -3,6 +3,9 @@ package appsocket
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
+	"log"
+	"strings"
 )
 
 
@@ -59,12 +62,16 @@ func CreateBS(ft FrameType, value string) []byte{
 
 // ParseLogInfo 从字节流解析获得用户名、密码信息
 func ParseLogInfo(bs []byte) (id, pswd string){
+	str := string(bs)
+	id = strings.Fields(str)[0]
+	pswd = strings.Fields(str)[1]
+	fmt.Println("解析得到用户名密码为：", id, pswd)
 	return id, pswd
 }
 
 // ParseRoomId 从字节流解析获得房间名称
 func ParseRoomId(bs []byte) (r string) {
-	return r
+	return string(bs)
 }
 
 // 以下转换均为大端模式（低地址放高位）
@@ -95,7 +102,10 @@ func lenToBytes(len uint32) []byte {
 func intToBytes(n uint32) []byte {
 	x := uint32(n)
 	bytesBuffer := bytes.NewBuffer([]byte{})
-	_ := binary.Write(bytesBuffer, binary.BigEndian, x)
+	err := binary.Write(bytesBuffer, binary.BigEndian, x)
+	if err != nil {
+		log.Fatal("intToBytes", err)
+	}
 	return bytesBuffer.Bytes()
 }
 
@@ -103,7 +113,10 @@ func intToBytes(n uint32) []byte {
 func bytesToInt(b []byte) uint32 {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x uint32
-	_ := binary.Read(bytesBuffer, binary.BigEndian, &x)
+	err := binary.Read(bytesBuffer, binary.BigEndian, &x)
+	if err != nil {
+		log.Fatal("bytesToInt", err)
+	}
 	return uint32(x)
 }
 

@@ -1,7 +1,8 @@
 package client
 
 import (
-	"chat/appsocket"
+	"chat_v3/appsocket"
+	"fmt"
 	"log"
 	"net"
 )
@@ -10,8 +11,9 @@ type Client struct {
 	id string
 	clientChan chan string
     as appsocket.AppSocket
-	online bool   // 已经登录为true
-	roomid string
+	online bool                // 已经登录为true
+	roomid string              // 在哪个房间
+
 }
 
 // 相当于构造函数
@@ -23,7 +25,7 @@ func NewClient(conn net.Conn) * Client{
 	return &c
 }
 
-func (c *Client)SendMsgToClient(str string){
+func (c *Client)sendMsg(str string){
 	c.clientChan <- str
 }
 
@@ -41,6 +43,7 @@ func (c *Client)SendLogInSuccess() {
 		log.Println("SendLogInSuccess", err)
 		return
 	}
+	fmt.Println("已发送验证成功")
 }
 
 func (c *Client)SendLoginFail(){

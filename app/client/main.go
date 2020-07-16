@@ -2,9 +2,8 @@ package main
 
 import (
 	"bufio"
-	"chat/appsocket"
+	"chat_v3/appsocket"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -31,7 +30,6 @@ const(
 	CMD_QUERY CommandType = 0   // 查询聊天室
 	CMD_JOIN CommandType = 1    // 加入聊天室
 	CMD_LOGOUT CommandType = 2  // 注销
-	CMD_LEAVE CommandType = 3   // 退出聊天室
 	CMD_MSG CommandType = 4     // 纯消息
 	CMD_HELP CommandType = 5    // 帮助，显示命令提示
 	CMD_LOGIN CommandType = 6   // 登录
@@ -70,22 +68,22 @@ func main(){
 	// 用户在输入框中输入，可能是聊天框命令，也可能是普通消息
 	// 输入内容，经过处理后，得到字节流
 	go func(){
-		defer conn.Close()
+		defer as.Close()
 		input := bufio.NewScanner(os.Stdin)
 		input.Split(bufio.ScanLines)
 		for input.Scan() {
 			var str string = input.Text()   // 获取用户命令行输入
-			cmdtype, bs := parse(str)
+			cmdtype, bs := parseInput(str, id)
 			if currentStatus == STAT_CMD{  // 如果现在正命令模式
 				if cmdtype == CMD_HELP {
 					showAllCommand()
 					continue
 				} else if cmdtype == CMD_QUERY {
-					conn.Write(bs)
+					as.WriteAppFrame(bs)
 					continue
 				} else if cmdtype == CMD_JOIN{
 					currentStatus = STAT_IN_ROOM
-					conn.Write(bs)
+					as.WriteAppFrame(bs)
 					continue
 				} else if cmdtype == CMD_LOGOUT{
 					return
@@ -96,12 +94,8 @@ func main(){
 			} else if currentStatus == STAT_IN_ROOM{  // 如果现在正在聊天室内
 				if cmdtype == CMD_LOGOUT{
 					return
-				} else if cmdtype == CMD_LEAVE{
-					conn.Write(bs)
-					continue
 				} else if cmdtype == CMD_MSG{
-					bs = []byte(id+":  "+string(bs))
-					conn.Write(bs)
+					as.WriteAppFrame(bs)
 					continue
 				} else {
 					continue
@@ -110,11 +104,12 @@ func main(){
 		}
 	}()
 
-	// 接收消息，接收的消息一律打印即可
-	_, err = io.Copy(os.Stdout, conn)   // Copy会一直阻塞到产生错误或EOF
-	if err != nil {
-		// log.Println(err)   // 当我们在发送消息例程中把conn关闭的时候，这里一定会报错
-		return
+	for {
+		_, val, err := as.ReadAppFrame()
+		if err != nil {
+			break
+		}
+		fmt.Println(string(val))
 	}
 
 }
@@ -124,6 +119,7 @@ func login(as *appsocket.AppSocket) (id string, err error){
 	for {
 		id, pswd := idInput()     // 键入用户名和密码
 		ok, err := checkID(id, pswd, as)
+		fmt.Println("checkID ....")
 		if err != nil {
 			log.Println("login", err)
 			return id, err
@@ -139,7 +135,11 @@ func login(as *appsocket.AppSocket) (id string, err error){
 // checkID 查询用户名和密码是否正确
 func checkID(id, pswd string, as *appsocket.AppSocket) (ok bool, err error){
 	bs := appsocket.CreateLoginBS(id, pswd)
-	as.WriteAppFrame(bs)
+	_, err = as.WriteAppFrame(bs)
+	if err != nil {
+		log.Fatal("checkID", err)
+	}
+	fmt.Println("ID and Password sent to server")
 	ft, _, err := as.ReadAppFrame()
 	if err != nil {
 		return false, err
@@ -168,30 +168,32 @@ func idInput() (id, pswd string){
 }
 
 
-func parse(str string) (t CommandType, bs []byte){
-	context := strings.Fields(str)
-	if len(context) == 0 {
+func parseInput(str, id string) (t CommandType, bs []byte){
+	// 处理输入了条空行
+	if str == "" {
 		t = CMD_EMPTY
 		return t, bs
 	}
-	t = CMD_MSG  // 默认为消息
-	bs = []byte(str)  // 在这里为了简单就直接转为字节流了 没有TLV
-	if context[0] == "\\query"{
-		t = CMD_QUERY
-	}else if context[0] == "\\join"{
-		t = CMD_JOIN
-	}else if context[0] == "\\logout"{
-		t = CMD_LOGOUT
-	}else if context[0] == "\\leave"{
-		t = CMD_LEAVE
-	}else if context[0] == "\\help"{
-		t = CMD_HELP
-	} else if context[0] == "\\login"{
-		t = CMD_LOGIN
-	}
-	return t, bs
-}
 
+	context := strings.Fields(str)
+	tag := context[0]
+	switch tag {
+	case "\\query":
+		return CMD_QUERY,  appsocket.CreateQueryBS()
+	case "\\join":
+		if len(context) < 2 {
+			return CMD_EMPTY, bs
+		}
+		return CMD_JOIN, appsocket.CreateJoinBS(context[1])
+	case "\\logout":
+		return CMD_LOGOUT, bs
+	case "\\help":
+		return CMD_HELP, bs
+	default:
+		str = id + ": " + str
+		return CMD_MSG, appsocket.CreateMsgBS(str)
+	}
+}
 
 
 // 查询聊天室 之后看看能不能加入通配查询的功能
