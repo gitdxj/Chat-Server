@@ -63,3 +63,9 @@ func checkIDPSWD(id, pswd string) (ok bool) {
 const TAG_SPECIFIER byte = 
 ```
 
+# 16.Jul
+* 重新设计结构——取消了Broadcaster，使用一个ClientManager来管理全部的连接
+* TLV：封装conn.Read和conn.Write实现了appsocket/AppSocket，保证每次读取出来一个TLV结构
+## todo
+1. 用户名密码传输的时候使用json
+2. 用户名和密码的验证尝试使用数据库
