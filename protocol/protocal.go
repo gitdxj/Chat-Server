@@ -1,8 +1,9 @@
-package appsocket
+package protocol
 
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -28,6 +29,37 @@ const(
 type LogInfo struct {
 	id string
 	pswd string
+}
+
+func NewLogInfo() interface{} {
+	return &LogInfo{}
+}
+
+func Send(p interface{}) error {
+	err := json.Marshal(v)
+	return err
+}
+
+type NewProtocolFunc func() interface{}
+
+var protoCreatMap map[FrameType]NewProtocolFunc
+
+func registerNewFunc(typ FrameType, f NewProtocolFunc) {
+	protoCreatMap[typ]= f
+}
+
+func ParseProtoc(typ FrameType, buf []byte) interface{} {
+	f, ok := protoCreatMap[typ]
+	p := f()
+	json.Unmarshal(buf, p)
+	handler, ok := handmap[typ]
+	handler(p)
+	return p
+}
+
+
+func handlerLogin(p interface{}) error {
+	p, ok := p.(*LogInfo)
 }
 
 // 下面的函数根据内容和创建TLV数据包

@@ -69,3 +69,10 @@ const TAG_SPECIFIER byte =
 ## todo
 1. 用户名密码传输的时候使用json
 2. 用户名和密码的验证尝试使用数据库
+
+# 17.Jul
+## todo
+* 重新修改代码结构
+* **Protocol 重新定义**
+* Protocol定义上把Server和Client分开
+* **封装 封装 封装**

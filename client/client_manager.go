@@ -1,7 +1,7 @@
 package client
 
 import (
-	"chat_v3/appsocket"
+	"chat_v3/protocol"
 	"fmt"
 	"log"
 	"net"
@@ -106,8 +106,8 @@ func (cm *ClientManager) RunNewConnection(conn net.Conn) {
 			return
 		}
 		if !c.online { // 若还没登录
-			if ft == appsocket.T_LOGIN {
-				id, pswd := appsocket.ParseLogInfo(val)
+			if ft == protocol.T_LOGIN {
+				id, pswd := protocol.ParseLogInfo(val)
 				if CheckLogIn(id, pswd) {  // 登录成功
 					c.id = id
 					c.online = true
@@ -119,21 +119,21 @@ func (cm *ClientManager) RunNewConnection(conn net.Conn) {
 					c.SendLoginFail()
 				}
 			}
-		} else { // 若已经登录
-			if ft == appsocket.T_JOIN {  // 类型为加入房间
-				roomid := appsocket.ParseRoomId(val)
+		} else {                       // 若已经登录
+			if ft == protocol.T_JOIN { // 类型为加入房间
+				roomid := protocol.ParseRoomId(val)
 				fmt.Println("加入房间:", roomid)
 				cm.AddClientToRoom(c.id, roomid)
 				c.roomid = roomid
 				go c.recvFromRoomAndSend()   // 从clientChan 收取同一房间的广播消息然后发给客户端
 				defer cm.RemoveClientFromRoom(c.id, c.roomid)
-			} else if ft == appsocket.T_QUERY {  // 类型为房间查询
+			} else if ft == protocol.T_QUERY { // 类型为房间查询
 				roomNames := cm.GetAllRoomNames()
-				_, err = c.as.WriteAppFrame(appsocket.CreateMsgBS(roomNames))
+				_, err = c.as.WriteAppFrame(protocol.CreateMsgBS(roomNames))
 				if err != nil {
 					log.Println(err)
 				}
-			} else if ft == appsocket.T_MSG {  // 类型为消息
+			} else if ft == protocol.T_MSG { // 类型为消息
 				// 如果c在某一房间内，就向这一房间的用户广播
 				if c.roomid != "" {
 					fmt.Println("所在的房间为 ", c.roomid)

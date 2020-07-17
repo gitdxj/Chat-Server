@@ -1,6 +1,7 @@
 package appsocket
 
 import (
+	"chat_v3/protocol"
 	"log"
 	"net"
 )
@@ -30,7 +31,7 @@ func (as *AppSocket) Close() {
 }
 
 // ReadAppFrame 从conn中读取一个TLV结构
-func (as *AppSocket) ReadAppFrame() (ft FrameType, val []byte, err error){
+func (as *AppSocket) ReadAppFrame() (ft protocol.FrameType, val []byte, err error){
 
 	// 从conn中读取4个字节作为TYPE
 	typeBytes, err := as.readLenN(TYPE_SIZE)
@@ -38,7 +39,7 @@ func (as *AppSocket) ReadAppFrame() (ft FrameType, val []byte, err error){
 	if err != nil {
 		return ft, val, err
 	}
-	ft = FrameType(bytesToInt(typeBytes))
+	ft = protocol.FrameType(protocol.bytesToInt(typeBytes))
 
 	// 从conn中读取4个字节作为LENGTH
 	lenBytes, err := as.readLenN(LENGTH_SIZE)
@@ -46,7 +47,7 @@ func (as *AppSocket) ReadAppFrame() (ft FrameType, val []byte, err error){
 	if err != nil {
 		return ft, val, err
 	}
-	length := bytesToInt(lenBytes)
+	length := protocol.bytesToInt(lenBytes)
 	//log.Println("MSG LENGTH =", length)
 
 	// 读取LENGTH个字节作为VAL
