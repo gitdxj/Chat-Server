@@ -31,36 +31,35 @@ type LogInfo struct {
 	pswd string
 }
 
-func NewLogInfo() interface{} {
-	return &LogInfo{}
-}
+// func NewLogInfo() interface{} {
+// 	return &LogInfo{}
+// }
 
-func Send(p interface{}) error {
-	err := json.Marshal(v)
-	return err
-}
+// func Send(p interface{}) error {
+// 	err := json.Marshal(v)
+// 	return err
+// }
 
-type NewProtocolFunc func() interface{}
+// type NewProtocolFunc func() interface{}
 
-var protoCreatMap map[FrameType]NewProtocolFunc
+// var protoCreatMap map[FrameType]NewProtocolFunc
 
-func registerNewFunc(typ FrameType, f NewProtocolFunc) {
-	protoCreatMap[typ]= f
-}
+// func registerNewFunc(typ FrameType, f NewProtocolFunc) {
+// 	protoCreatMap[typ]= f
+// }
 
-func ParseProtoc(typ FrameType, buf []byte) interface{} {
-	f, ok := protoCreatMap[typ]
-	p := f()
-	json.Unmarshal(buf, p)
-	handler, ok := handmap[typ]
-	handler(p)
-	return p
-}
+// func ParseProtoc(typ FrameType, buf []byte) interface{} {
+// 	f, ok := protoCreatMap[typ]
+// 	p := f()
+// 	json.Unmarshal(buf, p)
+// 	handler, ok := handmap[typ]
+// 	handler(p)
+// 	return p
+// }
 
-
-func handlerLogin(p interface{}) error {
-	p, ok := p.(*LogInfo)
-}
+// func handlerLogin(p interface{}) error {
+// 	p, ok := p.(*LogInfo)
+// }
 
 // 下面的函数根据内容和创建TLV数据包
 func CreateLoginBS(id, pswd string) []byte {
