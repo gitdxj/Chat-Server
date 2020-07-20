@@ -76,3 +76,24 @@ const TAG_SPECIFIER byte =
 * **Protocol 重新定义**
 * Protocol定义上把Server和Client分开
 * **封装 封装 封装**
+
+# 20.Jul
+
+1. 之前的代码比较繁琐，现在使用一个Protocol接口进行了封装，一开始给我示例的时候我也不知道这里具体要怎么做，只用一个接口如何进行封装呢？ Protocol的定义非常简单，就是  
+```go
+var Protocal interface{}
+```  
+**那么一切皆可为Protocal，大师我悟了**
+
+具体是使用类似于函数指针的方法，具体指令内容->Create->字节流->Parse->结构化数据->Handle 处理，其中Create Parse Handle通过类似于函数指针的方式，根据相应的FrameType来选择相应的处理函数。
+
+## todo
+* **统一的序列化和反序列化**：在这个版本中，每种消息都使用的不同的数据结构，比如加入聊天室\join roomid其中roomid是一个string序列化时直接被我转换成[]byte了，而登录\login info， info是一个LogInfo结构体
+```go
+type LogInfo struct {
+	Id   string,
+	Pswd string
+}
+```
+对这种消息进行序列化和反序列化使用的是json.Marshal和json.Unmarshal对（对应Create和Parse）  
+也就是针对不同的消息种类我们的Create和Parse函数都不同，而若我们将所有类型的消息都定义在一个结构体内，发任何消息都直接Marshal，Unmarshal即可
