@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"chat_v3/appsocket"
 	"chat_v3/protocol"
+	_ "chat_v3/protocol/p_impl"
 	"fmt"
 	"log"
 	"net"
@@ -135,20 +136,22 @@ func login(as *appsocket.AppSocket) (id string, err error){
 
 // checkID 查询用户名和密码是否正确
 func checkID(id, pswd string, as *appsocket.AppSocket) (ok bool, err error){
-	bs := protocol.CreateLoginBS(id, pswd)
+	info := protocol.LogInfo{Id:id, Pswd:pswd}
+	bs := protocol.Create(protocol.C_LOGIN, info).([]byte)
 	_, err = as.WriteAppFrame(bs)
 	if err != nil {
 		log.Fatal("checkID", err)
 	}
 	fmt.Println("ID and Password sent to server")
-	ft, _, err := as.ReadAppFrame()
+	ft, data, err := as.ReadAppFrame()
 	if err != nil {
 		return false, err
 	}
 
-	if ft == protocol.T_LOGIN_SUCCESS {
+	success := protocol.Parse(ft, data).(bool)
+	if success {
 		return true, nil
-	} else if ft == protocol.T_LOGIN_FAIL {
+	} else  {
 		return false, nil
 	}
 	return ok, err
@@ -179,20 +182,20 @@ func parseInput(str, id string) (t CommandType, bs []byte){
 	context := strings.Fields(str)
 	tag := context[0]
 	switch tag {
-	case "\\query":
-		return CMD_QUERY,  protocol.CreateQueryBS()
+	//case "\\query":
+	//	return CMD_QUERY,  protocol.CreateQueryBS()
 	case "\\join":
 		if len(context) < 2 {
 			return CMD_EMPTY, bs
 		}
-		return CMD_JOIN, protocol.CreateJoinBS(context[1])
+		return CMD_JOIN, protocol.Create(protocol.C_JOIN, context[1]).([]byte)
 	case "\\logout":
 		return CMD_LOGOUT, bs
 	case "\\help":
 		return CMD_HELP, bs
 	default:
 		str = id + ": " + str
-		return CMD_MSG, protocol.CreateMsgBS(str)
+		return CMD_MSG, protocol.Create(protocol.C_MSG, str).([]byte)
 	}
 }
 

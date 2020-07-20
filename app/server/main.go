@@ -2,6 +2,7 @@ package main
 
 import (
 	"chat_v3/client"
+	_ "chat_v3/protocol/p_impl"
 	"fmt"
 	"log"
 	"net"
@@ -10,6 +11,9 @@ import (
 func main(){
 
 	cm := client.NewClientManager()
+
+	go cm.Broadcaster()
+	go cm.Manager()
 
 	listen, err := net.Listen("tcp", "localhost: 8000")
 	if err != nil {
