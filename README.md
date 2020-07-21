@@ -97,3 +97,9 @@ type LogInfo struct {
 ```
 对这种消息进行序列化和反序列化使用的是json.Marshal和json.Unmarshal对（对应Create和Parse）  
 也就是针对不同的消息种类我们的Create和Parse函数都不同，而若我们将所有类型的消息都定义在一个结构体内，发任何消息都直接Marshal，Unmarshal即可
+
+# 21.Jul
+1. 使用json文件初始化参数运行，并通过flag包用命令行指定配置文件：
+```
+go run main.go -config config.json
+```
