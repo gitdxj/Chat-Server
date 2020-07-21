@@ -2,20 +2,32 @@ package main
 
 import (
 	"chat_v3/client"
+	"chat_v3/config"
 	_ "chat_v3/protocol/p_impl"
+	"flag"
 	"fmt"
 	"log"
 	"net"
 )
 
+var configFile string
+
+func init(){
+	flag.StringVar(&configFile, "config", "config.json", "服务器地址配置文件")
+}
+
 func main(){
 
-	cm := client.NewClientManager()
+	flag.Parse()
 
+	cm := client.NewClientManager()
 	go cm.Broadcaster()
 	go cm.Manager()
 
-	listen, err := net.Listen("tcp", "localhost: 8000")
+	config.InitJsonConfig(configFile)
+	addr := config.GetAddr()
+
+	listen, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
 		return
