@@ -1,4 +1,18 @@
-# Chat Server
+# 聊天室
+# 运行
+1. 在`app/client/config.json`和`app/server/config.json`中设置`Dial`和`Listen`的地址和端口
+2. `app/server`目录下`go run main.go`
+3. `app/client`目录下`go run main.go app.go`
+# 客户端
+登录时使用任意用户名密码即可，服务器不进行检查  
+**客户端指令：**
+* /join ROOMID 加入名称为ROOMID的房间
+* /logout
+* /help 
+
+`\query`查询房间的指令在17.Jul更改代码结构后就删除了
+
+
 # 服务器端设计
 
 ## goroutine
@@ -102,4 +116,15 @@ type LogInfo struct {
 1. 使用json文件初始化参数运行，并通过flag包用命令行指定配置文件：
 ```
 go run main.go -config config.json
+```
+2. 完成了20.Jul 要求的统一序列化和反序列化，网络传输只使用了一个结构 `NetMsg` 进行通信，这样序列化`Create`和反序列化`Parse`就只需要使用`json.Marshal`和`json.Unmarshal`就可以了
+```go
+// protocol/typ.go
+type NetMsg struct {
+	Id           string
+	Pswd         string
+	Msg          string
+	RoomId       string
+	LoginSuccess bool
+}
 ```
