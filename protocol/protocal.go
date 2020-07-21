@@ -2,6 +2,8 @@ package protocol
 
 import (
 	"chat_v3/client/ci"
+	"encoding/json"
+	"fmt"
 )
 
 type FrameType uint32
@@ -20,19 +22,19 @@ const (
 type Protocol interface {
 }
 
-type ProtocParseFunc func(data []byte) Protocol
+//type ProtocParseFunc func(data []byte) Protocol
 type ProtocHandleFunc func(p Protocol, c ci.Client)
 type ProtocCreateFunc func(p Protocol) Protocol
 
-var ProtocParseMap map[FrameType]ProtocParseFunc
+//var ProtocParseMap map[FrameType]ProtocParseFunc
 var ProtocHandleMap map[FrameType]ProtocHandleFunc
 var ProtocCreateMap map[FrameType]ProtocCreateFunc
 
 
 
-func RegisterNewParseFunc(ft FrameType, f ProtocParseFunc) {
-	ProtocParseMap[ft] = f
-}
+//func RegisterNewParseFunc(ft FrameType, f ProtocParseFunc) {
+//	ProtocParseMap[ft] = f
+//}
 
 func RegisterNewHanleFunc(ft FrameType, f ProtocHandleFunc) {
 	ProtocHandleMap[ft] = f
@@ -42,17 +44,34 @@ func RegisterNewCreateFunc(ft FrameType, f ProtocCreateFunc) {
 	ProtocCreateMap[ft] = f
 }
 
-func Parse(ft FrameType, data []byte) Protocol{
-	return ProtocParseMap[ft](data)
+//func Parse(ft FrameType, data []byte) Protocol{
+//	return ProtocParseMap[ft](data)
+//}
+
+// 所有的消息都用统一的结构后直接Unmarshal就可以了
+func Parse(data []byte) Protocol{
+	var nm NetMsg
+	err := json.Unmarshal(data, &nm)
+	if err != nil {
+		fmt.Println("Parse:", err)
+	}
+	return nm
 }
 
 func Handle(ft FrameType, p Protocol, c ci.Client){
 	ProtocHandleMap[ft](p, c)
 }
 
+//func Create(ft FrameType, p Protocol) Protocol{
+//	return ProtocCreateMap[ft](p)
+//}
+
 func Create(ft FrameType, p Protocol) Protocol{
-	return ProtocCreateMap[ft](p)
+	netMsg := p.(NetMsg)
+	val, _ := json.Marshal(netMsg)
+	return CreateBS(ft, val)
 }
+
 
 
 //type NewProtocolFunc func() interface{}

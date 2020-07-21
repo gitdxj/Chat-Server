@@ -1,8 +1,7 @@
-package byter
+package protocol
 
 import (
 	"bytes"
-	"chat_v3/protocol"
 	"encoding/binary"
 	"log"
 )
@@ -37,7 +36,7 @@ import (
 //	return bs
 //}
 
-func CreateBS(ft protocol.FrameType, V []byte) []byte {
+func CreateBS(ft FrameType, V []byte) []byte {
 	var bs []byte
 	T := typeToBytes(ft)
 	L := lenToBytes(uint32(len(V)))
@@ -61,23 +60,22 @@ func CreateBS(ft protocol.FrameType, V []byte) []byte {
 //	return string(bs)
 //}
 
-
 // 以下转换均为大端模式（低地址放高位）
 // i := 0x11         22         33         44
 // b[0] = 11, b[1] = 22, b[2] = 33, b[3] = 44
 
 // bytesToType 将4个byte转为一个FrameType
-func bytesToType(bs []byte) protocol.FrameType{
-	return protocol.FrameType(BytesToInt(bs))
+func bytesToType(bs []byte) FrameType {
+	return FrameType(BytesToInt(bs))
 }
 
 // bytesToType 将4个byte转为一个uint32类型变量
-func bytesToLen(bs []byte) uint32{
+func bytesToLen(bs []byte) uint32 {
 	return uint32(BytesToInt(bs))
 }
 
 // typeToBytes 将一个FrameType转为4个byte
-func typeToBytes(t protocol.FrameType) []byte {
+func typeToBytes(t FrameType) []byte {
 	return IntToBytes(uint32(t))
 }
 

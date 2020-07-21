@@ -1,3 +1,6 @@
+// 2020.7.21 将消息统一更换为NetMsg之后不再需要针对每一类型进行parse
+// Parse函数采用 protocol.Parse 一个函数即可
+
 package parser
 
 import (

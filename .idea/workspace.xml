@@ -21,15 +21,15 @@
     <property name="DefaultGoTemplateProperty" value="Go File" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="go.import.settings.migrated" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/app/client" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="go.autoimport" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Administrator\go\src\chat_v3\protocol" />
       <recent name="C:\Users\Administrator\go\src\chat_v3\app\server" />
       <recent name="C:\Users\Administrator\go\src\chat_v3" />
       <recent name="C:\Users\Administrator\go\src\chat_v3\client\ci" />
-      <recent name="C:\Users\Administrator\go\src\chat_v3\protocol" />
       <recent name="C:\Users\Administrator\go\src\chat_v3\client\handler" />
     </key>
   </component>

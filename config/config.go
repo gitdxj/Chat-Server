@@ -1,3 +1,5 @@
+// 使用json文件来配置 Listen 和 Dial 的地址
+
 package config
 
 import (

@@ -62,7 +62,7 @@ func (c *Client) Write(bs []byte) (n int, err error) {
 }
 
 func (c *Client) SendLoginOutcome(success bool){
-	c.Write(protocol.Create(protocol.S_LOGIN, success).([]byte))
+	c.Write(protocol.Create(protocol.S_LOGIN, protocol.NetMsg{LoginSuccess:success}).([]byte))
 }
 
 func CheckLogIn(id, pswd string) bool {
@@ -102,10 +102,44 @@ func (c *Client) JoinRoom(jm protocol.JoinMsg) {
 	c.cmChans.joinChan <- jm
 }
 
+//func (c *Client) HandleLogin(i interface{}) {
+//	info := i.(protocol.LogInfo)
+//	if CheckLogInfo(info) {
+//		c.SetId(info.Id)
+//		c.SetOnline(true)
+//		c.SendLoginOutcome(true)
+//		c.AddToCM()
+//	} else {
+//		c.SendLoginOutcome(false)
+//	}
+//}
+//
+//func (c *Client) HandleBroadcastMsg(i interface{}) {
+//	msg := i.(string)
+//	bm := protocol.BroadcastMsg{
+//		msg,
+//		c.roomid,
+//	}
+//	c.BroadcastMsg(bm)
+//}
+//
+//func (c *Client) HandleJoin(i interface{}) {
+//	roomid := i.(string)
+//	fmt.Println(c.id, "正在Handle Join", roomid)
+//	jm := protocol.JoinMsg{
+//		c.id,
+//		roomid,
+//	}
+//	c.SetRoom(roomid)
+//	go c.JoinRoom(jm)
+//	fmt.Println("用户", c.id, "加入了房间", roomid)
+//}
+
+
 func (c *Client) HandleLogin(i interface{}) {
-	info := i.(protocol.LogInfo)
-	if CheckLogInfo(info) {
-		c.SetId(info.Id)
+	nm := i.(protocol.NetMsg)
+	if CheckLogIn(nm.Id, nm.Pswd) {
+		c.SetId(nm.Id)
 		c.SetOnline(true)
 		c.SendLoginOutcome(true)
 		c.AddToCM()
@@ -115,16 +149,16 @@ func (c *Client) HandleLogin(i interface{}) {
 }
 
 func (c *Client) HandleBroadcastMsg(i interface{}) {
-	msg := i.(string)
+	nm := i.(protocol.NetMsg)
 	bm := protocol.BroadcastMsg{
-		msg,
+		nm.Msg,
 		c.roomid,
 	}
 	c.BroadcastMsg(bm)
 }
 
 func (c *Client) HandleJoin(i interface{}) {
-	roomid := i.(string)
+	roomid := i.(protocol.NetMsg).RoomId
 	fmt.Println(c.id, "正在Handle Join", roomid)
 	jm := protocol.JoinMsg{
 		c.id,
@@ -138,7 +172,7 @@ func (c *Client) HandleJoin(i interface{}) {
 // recvFromRoomAndSend 从聊天室接收消息并发送到客户端
 func (c *Client) recvFromRoomAndSend() {
 	for msg := range c.clientChan {
-		_, err := c.as.WriteAppFrame(protocol.Create(protocol.S_MSG, msg).([]byte))
+		_, err := c.as.WriteAppFrame(protocol.Create(protocol.S_MSG, protocol.NetMsg{Msg:msg}).([]byte))
 		if err != nil {
 			log.Println("recvFromRoomAndSend", err)
 			return
@@ -154,7 +188,7 @@ func (c* Client) Run(syn chan struct{}){
 		if err != nil {
 			break
 		}
-		p := protocol.Parse(ft, val)
+		p := protocol.Parse(val)
 		protocol.Handle(ft, p, c)
 	}
 	syn <- struct{}{}

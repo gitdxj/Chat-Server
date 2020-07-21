@@ -12,11 +12,11 @@ import (
 
 var configFile string
 
-func init(){
+func init() {
 	flag.StringVar(&configFile, "config", "config.json", "服务器地址配置文件")
 }
 
-func main(){
+func main() {
 
 	flag.Parse()
 
@@ -33,8 +33,8 @@ func main(){
 		return
 	}
 
-	for{
-		conn, err:= listen.Accept()
+	for {
+		conn, err := listen.Accept()
 		fmt.Println("New Connection From ", conn.RemoteAddr().String())
 		if err != nil {
 			log.Println(err)

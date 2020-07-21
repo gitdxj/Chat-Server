@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"bufio"
 	"chat_v3/appsocket"
 	"chat_v3/protocol"
+	_ "chat_v3/protocol/p_impl"
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"strings"
-	_ "chat_v3/protocol/p_impl"
 )
 
 /*
@@ -49,7 +49,6 @@ const allCommand string = "\\query roomid  查找指定房间\n" +
 	"在聊天室内：\n" +
 	"\\leave 退出聊天室\n" +
 	"\\logout 注销并退出\n"
-
 
 func Run(serverAddr string) {
 	conn, err := net.Dial("tcp", serverAddr)
@@ -114,7 +113,8 @@ func Run(serverAddr string) {
 		if err != nil {
 			break
 		}
-		fmt.Println(string(val))
+		msg := protocol.Parse(val).(protocol.NetMsg).Msg
+		fmt.Println(msg)
 	}
 }
 
@@ -138,19 +138,19 @@ func login(as *appsocket.AppSocket) (id string, err error) {
 
 // checkID 查询用户名和密码是否正确
 func checkID(id, pswd string, as *appsocket.AppSocket) (ok bool, err error) {
-	info := protocol.LogInfo{Id: id, Pswd: pswd}
-	bs := protocol.Create(protocol.C_LOGIN, info).([]byte)
+	nm := protocol.NetMsg{Id:id, Pswd:pswd}
+	bs := protocol.Create(protocol.C_LOGIN, nm).([]byte)
 	_, err = as.WriteAppFrame(bs)
 	if err != nil {
 		log.Fatal("checkID", err)
 	}
 	fmt.Println("ID and Password sent to server")
-	ft, data, err := as.ReadAppFrame()
+	_, data, err := as.ReadAppFrame()
 	if err != nil {
 		return false, err
 	}
 
-	success := protocol.Parse(ft, data).(bool)
+	success := protocol.Parse(data).(protocol.NetMsg).LoginSuccess
 	if success {
 		return true, nil
 	} else {
@@ -189,14 +189,14 @@ func parseInput(str, id string) (t CommandType, bs []byte) {
 		if len(context) < 2 {
 			return CMD_EMPTY, bs
 		}
-		return CMD_JOIN, protocol.Create(protocol.C_JOIN, context[1]).([]byte)
+		return CMD_JOIN, protocol.Create(protocol.C_JOIN, protocol.NetMsg{RoomId:context[1]}).([]byte)
 	case "\\logout":
 		return CMD_LOGOUT, bs
 	case "\\help":
 		return CMD_HELP, bs
 	default:
 		str = id + ": " + str
-		return CMD_MSG, protocol.Create(protocol.C_MSG, str).([]byte)
+		return CMD_MSG, protocol.Create(protocol.C_MSG, protocol.NetMsg{Msg:str}).([]byte)
 	}
 }
 

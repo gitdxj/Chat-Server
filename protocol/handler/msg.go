@@ -8,3 +8,4 @@ import (
 func HandleRoomMsg (p protocol.Protocol, c ci.Client){
 	c.HandleBroadcastMsg(p)
 }
+

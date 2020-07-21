@@ -1,7 +1,6 @@
 package appsocket
 
 import (
-	"chat_v3/appsocket/byter"
 	"chat_v3/protocol"
 	"log"
 	"net"
@@ -40,7 +39,7 @@ func (as *AppSocket) ReadAppFrame() (ft protocol.FrameType, val []byte, err erro
 	if err != nil {
 		return ft, val, err
 	}
-	ft = protocol.FrameType(byter.BytesToInt(typeBytes))
+	ft = protocol.FrameType(protocol.BytesToInt(typeBytes))
 
 	// 从conn中读取4个字节作为LENGTH
 	lenBytes, err := as.readLenN(LENGTH_SIZE)
@@ -48,7 +47,7 @@ func (as *AppSocket) ReadAppFrame() (ft protocol.FrameType, val []byte, err erro
 	if err != nil {
 		return ft, val, err
 	}
-	length := byter.BytesToInt(lenBytes)
+	length := protocol.BytesToInt(lenBytes)
 	//log.Println("MSG LENGTH =", length)
 
 	// 读取LENGTH个字节作为VAL
