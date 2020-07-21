@@ -2,8 +2,8 @@
 # 服务器端设计
 
 ## goroutine
-* 每一个接入服务器的用户——go handleConn  实现多用户
-* 每一个聊天室——go broadcaster  用来向同一聊天室的用户广播消息
+* 每一个接入服务器的用户——`go handleConn`  实现多用户
+* 每一个聊天室——`go broadcaster ` 用来向同一聊天室的用户广播消息
 
 ## Channel
 ```go
@@ -18,7 +18,7 @@ type channels struct{
 	messages chan string
 }
 ```
-在 broadcaster 内三个 channel 使用 select 并列
+在 `broadcaster` 内三个 `channel` 使用 `select` 并列
 
 # 11.Jul
 ## todo
@@ -47,25 +47,25 @@ func checkIDPSWD(id, pswd string) (ok bool) {
 2. TLV搞一下
 
 # 13.Jul review 修改意见
-* 模块化——client, room, clientManager 和 roomManager 让代码结构清晰
-* TLV机制—— 当我们使用net.Conn.Read读取字节流时，比如登录信息：\\login id pswd 有可能pswd还没有传输到，所以需要指定L(length)信息确保我们读取了一整条应用层的消息
+* 模块化——`client`, `room`, `clientManager` 和 `roomManager` 让代码结构清晰
+* TLV机制—— 当我们使用`net.Conn.Read`读取字节流时，比如登录信息：\\login id pswd 有可能pswd还没有传输到，所以需要指定L(length)信息确保我们读取了一整条应用层的消息
 
 # TLV 设计
 * **T 4 Byte 类型**
 * **L 4 Byte 长度**  protoBuf  --google varint
 * **V L Byte 值**
 ## TLV解析算法
-1. 读取 Tag（或Type）并使用 ntohl 将其转成主机字节序，指针偏移4；
-2. 读取 Length ntohl** 将其转成主机字节序，指针偏移4；
-3. 根据得到的长度读取 Value，若为 int、char、short、long 类型，将其转为主机字节序，指针偏移；若值为字符串，读取后指针偏移 Length；
+1. 读取 `Tag`（或`Type`）并使用 `ntohl` 将其转成主机字节序，指针偏移4；
+2. 读取 `Length` ntohl** 将其转成主机字节序，指针偏移4；
+3. 根据得到的长度读取 `Value`，若为 `int`、`char`、`short`、`long` 类型，将其转为主机字节序，指针偏移；若值为字符串，读取后指针偏移 `Length`；
 4. 重复上述三步，继续读取后面的 TLV 单元。
 ```go
 const TAG_SPECIFIER byte = 
 ```
 
 # 16.Jul
-* 重新设计结构——取消了Broadcaster，使用一个ClientManager来管理全部的连接
-* TLV：封装conn.Read和conn.Write实现了appsocket/AppSocket，保证每次读取出来一个TLV结构
+* 重新设计结构——取消了`Broadcaster`，使用一个`ClientManager`来管理全部的连接
+* TLV：封装`conn.Read`和`conn.Write`实现了`appsocket/AppSocket`，保证每次读取出来一个TLV结构
 ## todo
 1. 用户名密码传输的时候使用json
 2. 用户名和密码的验证尝试使用数据库
@@ -85,18 +85,18 @@ var Protocal interface{}
 ```  
 **那么一切皆可为Protocal，大师我悟了**
 
-具体是使用类似于函数指针的方法，具体指令内容->Create->字节流->Parse->结构化数据->Handle 处理，其中Create Parse Handle通过类似于函数指针的方式，根据相应的FrameType来选择相应的处理函数。
+具体是使用类似于函数指针的方法，具体指令内容->`Create`->字节流->`Parse`->结构化数据->`Handle` 处理，其中`Create` `Parse` `Handle`通过类似于函数指针的方式，根据相应的`FrameType`来选择相应的处理函数。
 
 ## todo
-* **统一的序列化和反序列化**：在这个版本中，每种消息都使用的不同的数据结构，比如加入聊天室\join roomid其中roomid是一个string序列化时直接被我转换成[]byte了，而登录\login info， info是一个LogInfo结构体
+* **统一的序列化和反序列化**：在这个版本中，每种消息都使用的不同的数据结构，比如加入聊天室`\join roomid`其中`roomid`是一个`string`序列化时直接被我转换成`[]byte`了，而登录`\login info`， `info`是一个`LogInfo`结构体
 ```go
 type LogInfo struct {
 	Id   string,
 	Pswd string
 }
 ```
-对这种消息进行序列化和反序列化使用的是json.Marshal和json.Unmarshal对（对应Create和Parse）  
-也就是针对不同的消息种类我们的Create和Parse函数都不同，而若我们将所有类型的消息都定义在一个结构体内，发任何消息都直接Marshal，Unmarshal即可
+对这种消息进行序列化和反序列化使用的是`json.Marshal`和`json.Unmarshal`对（对应`Create`和`Parse`）  
+也就是针对不同的消息种类我们的`Create`和`Parse`函数都不同，而若我们将所有类型的消息都定义在一个结构体内，发任何消息都直接Marshal，Unmarshal即可
 
 # 21.Jul
 1. 使用json文件初始化参数运行，并通过flag包用命令行指定配置文件：
