@@ -128,3 +128,4 @@ type NetMsg struct {
 	LoginSuccess bool
 }
 ```
+统一序列化和反序列化放在了 `UniMessage`分支下面
